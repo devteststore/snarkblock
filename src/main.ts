@@ -164,6 +164,7 @@ function show(m: Model, ms: number) {
   renderChecks(m, ms);
   renderBustSub();
   $('share-x').querySelector('small')!.textContent = 'Your bust picture + post';
+  $('share-note').hidden = true;
   $('secnav').hidden = false;
   renderBuy(m);
   renderReader(m);
@@ -478,7 +479,15 @@ $('share-x').addEventListener('click', async () => {
     return;
   }
   if (f?.png && navigator.clipboard && 'ClipboardItem' in window) {
-    try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': f.png })]); small.textContent = 'Picture copied: press Ctrl+V in X'; } catch { /* no clipboard */ }
+    const note = $('share-note');
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': f.png })]);
+      small.textContent = 'Picture copied';
+      note.innerHTML = `<b>✓ Your bust picture is copied.</b> In X, click in the post and press <b>${/Mac/.test(navigator.platform) ? '⌘' : 'Ctrl'}+V</b> to add it, then Post.`;
+      note.hidden = false;
+      setTimeout(() => window.open(intent, '_blank', 'noopener'), 1800);
+      return;
+    } catch { /* no clipboard */ }
   }
   window.open(intent, '_blank', 'noopener');
 });
