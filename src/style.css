@@ -145,7 +145,6 @@ dialog#before-order li { margin: 6px 0; }
 .mini-btn { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 5px 12px; font-size: 13px; font-weight: 600; }
 .mini-btn:hover { border-color: var(--accent); }
 .mini-btn:disabled { opacity: .5; }
-.sub .x { color: var(--ink); font-weight: 600; text-decoration: none; }
 .progress { margin-top: 12px; }
 /* order panel */
 dialog#order-panel { max-width: 580px; width: calc(100% - 24px); border: 0; border-radius: 18px; padding: 0; background: var(--card); color: var(--ink); box-shadow: 0 20px 60px #0005; }
@@ -177,6 +176,7 @@ dialog#order-panel::backdrop { background: #0d161d99; }
 .fine { font-size: 12px; color: var(--muted); margin: 12px 0 0; }
 .vid-btn { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 12px; padding: 10px 16px; text-align: left; font-size: 20px; }
 .vid-btn b { display: block; font-size: 15px; } .vid-btn small { display: block; font-size: 12px; color: var(--muted); }
+a.vid-btn { text-decoration: none; }
 .vid-btn:hover { border-color: var(--accent); } .vid-btn:disabled { opacity: .5; }
 @media (max-width: 700px) { .vids { width: 100%; } .vid-btn { flex: 1; } }
 .steps3 > li.bl-step { align-items: flex-start; }

@@ -336,9 +336,7 @@ for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-
   progress('Preparing the booklet pages…', 0);
   const { blob, ext } = await recordVideo(snap.m, snap.grid, { format, label: snap.label, small: isPhone,
     onProgress: (stage, f) => progress(stage === 'pages' ? 'Preparing the booklet pages…' : 'Recording the video (24 s)… keep this tab open', f) });
-  const file = `${snap.name}-${format === 'story' ? '9x16' : 'square'}.${ext}`;
-  save(blob, file);
-  if (format === 'square') { lastVideo = { m: snap.m, blob, file }; shareHint(); }
+  save(blob, `${snap.name}-${format === 'story' ? '9x16' : 'square'}.${ext}`);
 }); });
 
 // ---------- ③ buy the bricks ----------
@@ -460,45 +458,10 @@ function renderBustSub() {
   const m = current(); if (!m) return;
   $('bust-sub').textContent = `${plateLabel() ? `zkSNARK ${plateLabel()} · ` : ''}${m.size === 'xl' ? 'XL' : 'Mini'} · built and checked in your browser`;
 }
-let lastVideo: { m: Model; blob: Blob; file: string } | null = null;
 function shareHint() {
-  const m = current();
-  $('share-x').querySelector('small')!.textContent = lastVideo && lastVideo.m === m ? 'Square video + link' : 'Cover picture + link';
+  const text = `I've just generated my zkSNARK ${plateLabel()} blocks, have you?\n\nzkSNARKs: https://zilkroad.com\n\n#zkSNARKs #Zilkroad`;
+  $<HTMLAnchorElement>('share-x').href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.origin + location.pathname)}`;
 }
-async function coverPng(m: Model, g: SnarkGrid, label: string): Promise<Blob> {
-  let page: HTMLCanvasElement | null = maker && makerFor === m ? maker.page(1) : null;
-  if (!page) {
-    const { drawPages } = await import('./export/pdf');
-    await drawPages(m, g, { label, renderSize: isPhone ? 800 : 1000 }, pg => {
-      const c = document.createElement('canvas'); c.width = pg.width; c.height = pg.height;
-      c.getContext('2d')!.drawImage(pg, 0, 0); page = c;
-    }, n => n === 1);
-  }
-  return new Promise((res, rej) => page!.toBlob(b => (b ? res(b) : rej(new Error('No picture'))), 'image/png'));
-}
-$('share-x').addEventListener('click', async () => {
-  const snap = snapshot(); if (!snap || !snap.label) return;
-  const url = location.origin + location.pathname;
-  const text = `I've just generated my zkSNARK ${snap.label} blocks, have you?\n\nzkSNARKs: https://zilkroad.com\n\n#zkSNARKs #Zilkroad`;
-  const intent = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-  const touch = matchMedia('(pointer: coarse)').matches;
-  if (!touch || !navigator.canShare) window.open(intent, '_blank', 'noopener');
-  const video = lastVideo && lastVideo.m === snap.m ? lastVideo : null;
-  const blob = video ? video.blob : await coverPng(snap.m, snap.grid, snap.label).catch(() => null);
-  if (!blob) return;
-  const fileName = video ? video.file : `${snap.name}-cover.png`;
-  if (touch && navigator.canShare) {
-    const file = new File([blob], fileName, { type: blob.type || 'image/png' });
-    if (navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], text: `${text}\n${url}` }); return; }
-      catch (e) { if ((e as Error).name === 'AbortError') return; }
-    }
-    save(blob, fileName);
-    window.open(intent, '_blank', 'noopener');
-    return;
-  }
-  if (!video) save(blob, fileName);
-});
 
 const examples = [1, 7, 42, 100, 256, 420, 777, 1000, 1337, 2048, 3141, 4096, 5000, 6969, 8192, 9999, 10000]
   .map(id => ({ id, title: `zkSNARK #${id}` }));
