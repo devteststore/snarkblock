@@ -83,8 +83,8 @@ export function analyze(g: SnarkGrid, hold: HoldMode = 'path', onlyLego = false)
         if (inGroup.has(`${r + 1},${c}`)) continue;   // held by the group pixel below
         const col: [number, number][] = [];
         let rr = r + 1;
-        while (rr < N && !attached[rr][c]) { col.push([rr, c]); rr++; }
-        if (rr < N) groupHit ??= [rr, c];
+        while (rr < N && !attached[rr][c] && !sil(rr, c)) { col.push([rr, c]); rr++; }
+        if (rr < N && attached[rr][c]) groupHit ??= [rr, c];
         columns.push(col);
       }
       const ref = groupHit ?? baseRef();

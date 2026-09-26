@@ -171,14 +171,15 @@ export class PageMaker {
  */
 export async function drawPages(m: Model, grid: SnarkGrid, o: PageOptions, use: (page: HTMLCanvasElement, n: number, total: number) => void | Promise<void>, pick: (n: number, total: number) => boolean = () => true): Promise<number> {
   const pm = new PageMaker(m, grid, o);
-  await pm.warm();
-  for (let n = 1; n <= pm.total; n++) {
-    if (!pick(n, pm.total)) continue;
-    await use(pm.page(n), n, pm.total);
-    await new Promise(res => setTimeout(res, 0));
-  }
-  pm.dispose();
-  return pm.total;
+  try {
+    await pm.warm();
+    for (let n = 1; n <= pm.total; n++) {
+      if (!pick(n, pm.total)) continue;
+      await use(pm.page(n), n, pm.total);
+      await new Promise(res => setTimeout(res, 0));
+    }
+    return pm.total;
+  } finally { pm.dispose(); }
 }
 
 export const PAGE_SIZE = [PW, PH] as const;

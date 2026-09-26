@@ -15,6 +15,11 @@ const worker = new Worker(new URL('./worker/build.worker.ts', import.meta.url), 
 let nextId = 1;
 const pending = new Map<number, (r: BuildReply) => void>();
 worker.onmessage = (e: MessageEvent<BuildReply>) => { pending.get(e.data.id)?.(e.data); pending.delete(e.data.id); };
+worker.onerror = e => {
+  e.preventDefault();
+  for (const [id, res] of pending) res({ id, ok: false, code: 'worker', message: 'Building failed in this browser. Reload the page and try again.' });
+  pending.clear();
+};
 const build = (req: Omit<BuildRequest, 'id'>) => new Promise<BuildReply>(res => { const id = nextId++; pending.set(id, res); worker.postMessage({ ...req, id }); });
 
 const isPhone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
@@ -30,6 +35,7 @@ let size: SizeId = 'xl';
 // one model per size and "prefer LEGO parts" choice
 const models = new Map<string, Model>();
 let preferLego = false;
+let shownSize: SizeId = size, shownPl = false;
 const mkey = (s: SizeId) => `${s}|${preferLego}`;
 
 // ---------- input ----------
@@ -134,7 +140,14 @@ async function setSize(s: SizeId) {
     busy(`Building the ${s === 'xl' ? 'XL' : 'Mini'} model${pl ? ' with parts LEGO sells' : ''}…`);
     const r = await build({ size: s, grid: g, preferLego: pl });
     if (grid !== g) return;   // another number was loaded meanwhile
-    if (!r.ok) { busy(null); showError(r.message); return; }
+    if (!r.ok) {
+      busy(null); showError(r.message);
+      if (s !== size || pl !== preferLego) return;
+      size = shownSize; preferLego = shownPl;
+      document.querySelectorAll<HTMLButtonElement>('.size').forEach(b => b.setAttribute('aria-checked', String(b.dataset.size === size)));
+      const back = current(); if (back) renderBuy(back);
+      return;
+    }
     models.set(k, r.model);
     if (s === size && pl === preferLego) show(r.model, r.ms);   // still what is asked for
   } else show(have, 0);
@@ -142,6 +155,7 @@ async function setSize(s: SizeId) {
 
 function show(m: Model, ms: number) {
   busy(null);
+  shownSize = size; shownPl = preferLego;
   $('hint').hidden = true;
   $('snarkno').textContent = plateLabel();
   viewer.setLabel(plateLabel());
