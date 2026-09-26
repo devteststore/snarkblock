@@ -338,8 +338,7 @@ for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-
     onProgress: (stage, f) => progress(stage === 'pages' ? 'Preparing the booklet pages…' : 'Recording the video (24 s)… keep this tab open', f) });
   const file = `${snap.name}-${format === 'story' ? '9x16' : 'square'}.${ext}`;
   save(blob, file);
-  lastVideo = { m: snap.m, blob, file };
-  shareHint();
+  if (format === 'square') { lastVideo = { m: snap.m, blob, file }; shareHint(); }
 }); });
 
 // ---------- ③ buy the bricks ----------
@@ -464,7 +463,7 @@ function renderBustSub() {
 let lastVideo: { m: Model; blob: Blob; file: string } | null = null;
 function shareHint() {
   const m = current();
-  $('share-x').querySelector('small')!.textContent = lastVideo && lastVideo.m === m ? 'Your video + link' : 'Cover picture + link';
+  $('share-x').querySelector('small')!.textContent = lastVideo && lastVideo.m === m ? 'Square video + link' : 'Cover picture + link';
 }
 async function coverPng(m: Model, g: SnarkGrid, label: string): Promise<Blob> {
   let page: HTMLCanvasElement | null = maker && makerFor === m ? maker.page(1) : null;
