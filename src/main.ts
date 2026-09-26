@@ -478,3 +478,13 @@ if (import.meta.env.DEV) {
   Promise.all([import('./core/detect'), import('./core/build')]).then(([d, b]) =>
     Object.assign(window, { ptb: { viewer, start, exampleImage, examples, setSize, build, detectSnark: d.detectSnark, buildModel: b.buildModel, fileToImage } }));
 }
+
+// donate: copy the Zcash address
+const zecCopy = document.getElementById('zec-copy') as HTMLButtonElement;
+const zecAddr = document.getElementById('zec-addr') as HTMLInputElement;
+zecCopy.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(zecAddr.value); }
+  catch { zecAddr.select(); document.execCommand('copy'); }
+  zecCopy.textContent = 'Copied!';
+  setTimeout(() => { zecCopy.textContent = 'Copy'; }, 1500);
+});

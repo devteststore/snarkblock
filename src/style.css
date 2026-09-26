@@ -89,6 +89,11 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 32px; }
 
 .foot { max-width: 1080px; margin: 0 auto; padding: 8px 16px 28px; font-size: 13px; color: var(--muted); }
 .foot p { margin: 4px 0; }
+.donate { margin-top: 14px; }
+.donate-label { display: block; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.donate-box { display: flex; gap: 8px; max-width: 640px; }
+.donate-box input { flex: 1; min-width: 0; font: 12px ui-monospace, monospace; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+.donate-box button { padding: 8px 16px; border: 0; border-radius: 8px; background: var(--accent); color: var(--card); font-weight: 700; cursor: pointer; }
 
 dialog#before-order { max-width: 560px; width: calc(100% - 32px); border: 0; border-radius: 16px; padding: 20px 22px; background: var(--card); color: var(--ink); box-shadow: 0 20px 60px #0005; }
 dialog#before-order::backdrop { background: #0d161d99; }
