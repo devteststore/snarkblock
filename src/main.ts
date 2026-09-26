@@ -163,7 +163,7 @@ function show(m: Model, ms: number) {
   viewer.play();
   renderChecks(m, ms);
   renderBustSub();
-  shareHint();
+  $('share-x').querySelector('small')!.textContent = 'Your bust picture + post';
   $('secnav').hidden = false;
   renderBuy(m);
   renderReader(m);
@@ -293,7 +293,12 @@ function showPage(n: number) {
   if (!maker) return;
   pageNo = Math.max(1, Math.min(maker.total, n));
   const c = $<HTMLCanvasElement>('page-canvas');
-  c.getContext('2d')!.drawImage(maker.page(pageNo), 0, 0, c.width, c.height);
+  const pg = maker.page(pageNo);
+  c.getContext('2d')!.drawImage(pg, 0, 0, c.width, c.height);
+  if (pageNo === 1 && makerFor && (!shareFile || shareFile.m !== makerFor)) {
+    const m = makerFor, name = baseName();
+    pg.toBlob(b => { if (b && current() === m && (!shareFile || shareFile.m !== m)) shareFile = { m, file: new File([b], `${name}-cover.png`, { type: 'image/png' }), png: b }; }, 'image/png');
+  }
   $<HTMLInputElement>('pg-range').value = String(pageNo);
   $('pg-label').textContent = `${maker.label(pageNo)}${pageNo > 1 && pageNo <= maker.steps + 1 ? ` of ${maker.steps}` : ''}`;
   $<HTMLButtonElement>('pg-prev').disabled = pageNo === 1;
@@ -336,7 +341,9 @@ for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-
   progress('Preparing the booklet pages…', 0);
   const { blob, ext } = await recordVideo(snap.m, snap.grid, { format, label: snap.label, small: isPhone,
     onProgress: (stage, f) => progress(stage === 'pages' ? 'Preparing the booklet pages…' : 'Recording the video (24 s)… keep this tab open', f) });
-  save(blob, `${snap.name}-${format === 'story' ? '9x16' : 'square'}.${ext}`);
+  const file = `${snap.name}-${format === 'story' ? '9x16' : 'square'}.${ext}`;
+  save(blob, file);
+  if (format === 'square' && current() === snap.m) shareFile = { m: snap.m, file: new File([blob], file, { type: blob.type }), png: shareFile?.m === snap.m ? shareFile.png : null };
 }); });
 
 // ---------- ③ buy the bricks ----------
@@ -458,10 +465,23 @@ function renderBustSub() {
   const m = current(); if (!m) return;
   $('bust-sub').textContent = `${plateLabel() ? `zkSNARK ${plateLabel()} · ` : ''}${m.size === 'xl' ? 'XL' : 'Mini'} · built and checked in your browser`;
 }
-function shareHint() {
+let shareFile: { m: Model; file: File; png: Blob | null } | null = null;
+$('share-x').addEventListener('click', async () => {
+  const m = current(); if (!m || !loadedId) return;
+  const url = location.origin + location.pathname;
   const text = `I've just generated my zkSNARK ${plateLabel()} blocks, have you?\n\nzkSNARKs: https://zilkroad.com\n\n#zkSNARKs #Zilkroad`;
-  $<HTMLAnchorElement>('share-x').href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.origin + location.pathname)}`;
-}
+  const intent = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  const f = shareFile?.m === m ? shareFile : null;
+  const small = $('share-x').querySelector('small')!;
+  if (matchMedia('(pointer: coarse)').matches && f && navigator.canShare?.({ files: [f.file] })) {
+    try { await navigator.share({ files: [f.file], text: `${text}\n${url}` }); } catch { /* closed */ }
+    return;
+  }
+  if (f?.png && navigator.clipboard && 'ClipboardItem' in window) {
+    try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': f.png })]); small.textContent = 'Picture copied: press Ctrl+V in X'; } catch { /* no clipboard */ }
+  }
+  window.open(intent, '_blank', 'noopener');
+});
 
 const examples = [1, 7, 42, 100, 256, 420, 777, 1000, 1337, 2048, 3141, 4096, 5000, 6969, 8192, 9999, 10000]
   .map(id => ({ id, title: `zkSNARK #${id}` }));
