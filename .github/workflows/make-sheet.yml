@@ -1,0 +1,55 @@
+name: Make the zkSNARK sheet
+
+# Opens zilkroad.com in a real Chrome, runs scripts/make-sheet.browser.js there,
+# and commits public/snarks.png + public/snarks.json (all 10,000 zkSNARKs) to the
+# branch it ran on. Run it again any time to refresh the copy.
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/make-sheet.yml', 'scripts/make-sheet*', 'scripts/sheet-from-folder.ts', 'art/**', 'art*.zip']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: make-sheet-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sheet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unpack uploaded art*.zip into art/
+        if: hashFiles('art*.zip') != ''
+        run: |
+          mkdir -p art
+          for z in art*.zip; do echo "$z"; unzip -q -o -j "$z" '*.png' -d art; done
+          ls art | wc -l
+      - name: From the uploaded art (folder or zip), if there is any
+        if: hashFiles('art/1.png', 'art*.zip') != ''
+        run: npx tsx scripts/sheet-from-folder.ts art
+      - name: Else fetch all 10,000 on zilkroad.com in Chrome
+        if: hashFiles('art/1.png', 'art*.zip') == ''
+        run: xvfb-run -a node scripts/make-sheet-ci.cjs
+      - name: Check the sheet (results are reported; the sheet is committed either way)
+        continue-on-error: true
+        run: |
+          file public/snarks.png
+          head -c 600 public/snarks.json; echo
+          npm test
+      - name: Commit the sheet
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/snarks.png public/snarks.json
+          git diff --cached --quiet && { echo "sheet unchanged"; exit 0; }
+          git commit -m "Add the zkSNARK sheet: all 10,000 from zilkroad.com/api/art/<n>"
+          git push origin HEAD:${{ github.ref_name }}

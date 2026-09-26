@@ -1,0 +1,86 @@
+name: Real zkSNARKs end to end
+
+# Uses the site's own sheet (public/snarks.png + snarks.json): builds all 10,000
+# zkSNARKs in Mini and XL, runs the real-image tests, and types numbers on the
+# built site in a headless browser. Skipped until the sheet is committed.
+on:
+  push:
+    branches: [main]
+    paths: ['public/snarks.*', 'src/**', 'scripts/**', 'test/**', '.github/workflows/real-snarks.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sheet:
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.check.outputs.present }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f public/snarks.png ] && [ -f public/snarks.json ]; then echo present=true >> "$GITHUB_OUTPUT"; cat public/snarks.json | head -c 400; echo; file public/snarks.png
+          else echo present=false >> "$GITHUB_OUTPUT"; echo "No sheet yet: run scripts/make-sheet.browser.js on zilkroad.com and commit public/snarks.png + snarks.json"; fi
+
+  build-all:
+    needs: sheet
+    if: needs.sheet.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/real-all.ts ${{ matrix.shard }} 8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: real-${{ matrix.shard }}
+          path: out/real/
+
+  summary:
+    needs: build-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: real-*
+          path: out/real/
+          merge-multiple: true
+      - run: npx tsx scripts/real-summary.ts
+
+  tests-and-browser:
+    needs: sheet
+    if: needs.sheet.outputs.present == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit + real-image tests
+        run: npm test
+      - name: Type numbers on the built site
+        run: |
+          npm run build
+          (npx vite preview --port 4173 --strictPort &) ; sleep 5
+          node scripts/e2e-number.cjs http://localhost:4173/ 1,2,42,100,777,5000,9999,10000 out/e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-screenshots
+          path: out/e2e/
