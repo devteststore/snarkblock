@@ -82,7 +82,7 @@ export class StepRenderer {
   async warm() {
     this.show(() => 2);
     this.outline(this.m.steps[0] ?? []);
-    await this.gl.compileAsync(this.scene, this.camera);
+    await Promise.race([this.gl.compileAsync(this.scene, this.camera), new Promise(res => setTimeout(res, 3000))]);
   }
 
   /** Show pieces by state: 0 hidden, 1 pale, 2 full colour. */
@@ -132,7 +132,8 @@ export class StepRenderer {
   }
 
   dispose() {
-    [...this.full, ...this.pale].forEach(b => { (b.mesh.material as THREE.Material).dispose(); b.mesh.dispose(); });
+    [...this.full, ...this.pale].forEach(b => b.mesh.dispose());
+    this.scene.traverse(o => { const mt = (o as THREE.Mesh).material; if (mt) (Array.isArray(mt) ? mt : [mt]).forEach(x => x.dispose()); });
     this.gl.dispose();
     // free the WebGL context now: Chrome keeps at most 16 and drops the oldest (the 3D view)
     this.gl.forceContextLoss();
