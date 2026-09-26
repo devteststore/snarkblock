@@ -27,6 +27,7 @@ export class StepRenderer {
   constructor(private m: Model, size = 1100, label = '') {
     this.canvas.width = this.canvas.height = size;
     this.gl = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+    this.gl.debug.checkShaderErrors = false;
     this.gl.setPixelRatio(1); this.gl.setSize(size, size, false);
     this.gl.shadowMap.enabled = true; this.gl.shadowMap.type = THREE.PCFShadowMap;
     this.gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -76,6 +77,12 @@ export class StepRenderer {
       this.scene.add(this.plate);
     }
     m.steps.forEach((s2, si) => s2.forEach(i => { this.step[i] = si; }));
+  }
+
+  async warm() {
+    this.show(() => 2);
+    this.outline(this.m.steps[0] ?? []);
+    await this.gl.compileAsync(this.scene, this.camera);
   }
 
   /** Show pieces by state: 0 hidden, 1 pale, 2 full colour. */

@@ -41,6 +41,7 @@ export class Viewer {
     // if the browser drops the context anyway, get it back and redraw instead of staying blank
     canvas.addEventListener('webglcontextlost', e => e.preventDefault());
     canvas.addEventListener('webglcontextrestored', () => { this.dirty = true; });
+    this.renderer.debug.checkShaderErrors = false;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;

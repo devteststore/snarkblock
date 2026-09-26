@@ -237,8 +237,10 @@ async function renderReader(m: Model) {
   const { PageMaker } = await import('./export/pdf');
   if (current() !== m) return;
   maker?.dispose();
-  maker = new PageMaker(m, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1000 });
-  makerFor = m;
+  const mk = new PageMaker(m, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1000 });
+  maker = mk; makerFor = m;
+  await mk.warm();
+  if (maker !== mk) return;
   const range = $<HTMLInputElement>('pg-range');
   range.max = String(maker.total);
   $('manual-sub').textContent = `${m.steps.length} steps · ${maker.total} pages · one page per layer`;

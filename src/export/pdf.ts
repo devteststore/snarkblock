@@ -94,6 +94,7 @@ export class PageMaker {
     this.r = new StepRenderer(m, o.renderSize ?? 1100, o.label);
     this.title = `${o.label ? `zkSNARK ${o.label}` : 'Your zkSNARK'} · ${m.size === 'xl' ? 'XL' : 'Mini'} brick bust`;
   }
+  warm(): Promise<void> { return this.r.warm(); }
   /** "Cover", "Step 12", "Parts 1/2" */
   label(n: number): string {
     if (n === 1) return 'Cover';
@@ -170,6 +171,7 @@ export class PageMaker {
  */
 export async function drawPages(m: Model, grid: SnarkGrid, o: PageOptions, use: (page: HTMLCanvasElement, n: number, total: number) => void | Promise<void>, pick: (n: number, total: number) => boolean = () => true): Promise<number> {
   const pm = new PageMaker(m, grid, o);
+  await pm.warm();
   for (let n = 1; n <= pm.total; n++) {
     if (!pick(n, pm.total)) continue;
     await use(pm.page(n), n, pm.total);
