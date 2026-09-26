@@ -479,7 +479,7 @@ async function coverPng(m: Model, g: SnarkGrid, label: string): Promise<Blob> {
 $('share-x').addEventListener('click', async () => {
   const snap = snapshot(); if (!snap || !snap.label) return;
   const url = location.origin + location.pathname;
-  const text = `I've just generated my zkSNARK ${snap.label} blocks, have you?\n\n#zkSNARKs #Zilkroad`;
+  const text = `I've just generated my zkSNARK ${snap.label} blocks, have you?\n\nzkSNARKs: https://zilkroad.com\n\n#zkSNARKs #Zilkroad`;
   const intent = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   const touch = matchMedia('(pointer: coarse)').matches;
   if (!touch || !navigator.canShare) window.open(intent, '_blank', 'noopener');
